@@ -162,6 +162,50 @@ def contour_levels(values):
     return levels
 
 
+def draw_path(ax, result, path):
+    """Нарисовать траекторию метода так, чтобы был виден характер движения."""
+    if result["method"] == "Покоординатный спуск":
+        # Для покоординатного спуска путь должен выглядеть как "лесенка":
+        # один отрезок идет параллельно оси x1, следующий — параллельно оси x2.
+        for i in range(len(path) - 1):
+            p0 = path[i]
+            p1 = path[i + 1]
+            color = "tab:red" if abs(p1[0] - p0[0]) > abs(p1[1] - p0[1]) else "tab:orange"
+            ax.plot([p0[0], p1[0]], [p0[1], p1[1]], "o-", color=color, linewidth=2.2, markersize=4)
+
+        ax.plot([], [], color="tab:red", linewidth=2.2, label="шаг по x1")
+        ax.plot([], [], color="tab:orange", linewidth=2.2, label="шаг по x2")
+        return
+
+    # Для градиентного и наискорейшего спуска сама траектория идет
+    # в направлении антиградиента. Это направление перпендикулярно линии уровня
+    # в текущей точке. Поэтому дополнительно рисуем синие стрелки -grad F.
+    ax.plot(path[:, 0], path[:, 1], "o-", color="tab:red", linewidth=1.8, markersize=4, label="траектория")
+
+    x_span = path[:, 0].max() - path[:, 0].min()
+    y_span = path[:, 1].max() - path[:, 1].min()
+    arrow_len = 0.16 * max(x_span, y_span, 1.0)
+
+    # Не рисуем стрелку в каждой точке, чтобы график не стал нечитаемым.
+    shown = range(min(5, len(path) - 1))
+    for i in shown:
+        point = path[i]
+        g = grad_F(point)
+        norm = np.linalg.norm(g)
+        if norm < 1e-12:
+            continue
+        direction = -g / norm
+        end = point + arrow_len * direction
+        ax.annotate(
+            "",
+            xy=end,
+            xytext=point,
+            arrowprops=dict(arrowstyle="->", color="tab:blue", lw=1.4, alpha=0.9),
+        )
+
+    ax.plot([], [], color="tab:blue", linewidth=1.4, label=r"направление $-\nabla F$")
+
+
 def plot_result(result, filename):
     """Строим линии уровня и ломаную последовательных приближений."""
     path = np.array(result["path"])
@@ -185,16 +229,24 @@ def plot_result(result, filename):
     fig, ax = plt.subplots(figsize=(7, 6))
     contour = ax.contour(xx, yy, zz, levels=contour_levels(result["values"]), cmap=colormap, linewidths=0.8)
     ax.clabel(contour, inline=True, fontsize=7, fmt="%.3g")
-    ax.plot(path[:, 0], path[:, 1], "o-", color="tab:red", linewidth=1.8, markersize=4)
+    draw_path(ax, result, path)
 
-    # Чтобы подписи не слипались около минимума, подписываем начало и конец.
-    shown = set(range(min(6, len(path))))
+    # Чтобы подписи не слипались около минимума, показываем только несколько
+    # первых точек и финальную точку.
+    if result["method"] == "Покоординатный спуск":
+        shown = set(range(min(5, len(path))))
+    else:
+        shown = set(range(min(3, len(path))))
     shown.add(len(path) - 1)
     for i in sorted(shown):
         ax.annotate(f"M{i}", path[i], textcoords="offset points", xytext=(6, 6), fontsize=8)
 
     ax.scatter([0], [2], marker="*", s=160, color="orange", label="минимум (0, 2)")
-    ax.set_title(f"{result['method']}: уровни проходят через вершины ломаной")
+    if result["method"] == "Покоординатный спуск":
+        title = "Покоординатный спуск: лестничная траектория"
+    else:
+        title = f"{result['method']}: шаги перпендикулярны линиям уровня"
+    ax.set_title(title)
     ax.set_xlabel("x1")
     ax.set_ylabel("x2")
     ax.grid(alpha=0.2)

@@ -86,6 +86,46 @@
 \subsection{Формулы метода}
 
 На каждой итерации строится кубический интерполяционный многочлен Эрмита по значениям $f(u)$, $f(v)$ и производным $f'(u)$, $f'(v)$ на текущем отрезке $[u,v]$. Для нахождения стационарной точки кубики использовались формулы:
+
+Для вывода формул удобно обозначать текущие границы отрезка как $u$ и $v$, чтобы не путать их с коэффициентами кубического многочлена. Пусть
+\begin{equation}
+  h=v-u.
+\end{equation}
+Кубическую аппроксимацию можно записать в локальной форме:
+\begin{equation}
+  m(x)=f(u)+f'(u)(x-u)+b_k(x-u)^2+a_k(x-u)^3.
+\end{equation}
+Здесь $a_k$ и $b_k$ --- коэффициенты кубической модели на $k$-й итерации. Они находятся из двух условий согласования в правом конце отрезка:
+\begin{equation}
+  m(v)=f(v), \qquad m'(v)=f'(v).
+\end{equation}
+Введем вспомогательные величины:
+\begin{equation}
+  A_k=f(v)-f(u)-f'(u)h, \qquad B_k=f'(v)-f'(u).
+\end{equation}
+Тогда из системы
+\begin{equation}
+  a_kh^3+b_kh^2=A_k, \qquad 3a_kh^2+2b_kh=B_k
+\end{equation}
+получаются коэффициенты:
+\begin{equation}
+  a_k=\frac{B_kh-2A_k}{h^3}, \qquad
+  b_k=\frac{3A_k-B_kh}{h^2}.
+\end{equation}
+
+Чтобы найти минимум кубической аппроксимации, решается уравнение $m'(x)=0$:
+\begin{equation}
+  m'(x)=f'(u)+2b_k(x-u)+3a_k(x-u)^2=0.
+\end{equation}
+Если положить $y=x-u$, то получается квадратное уравнение
+\begin{equation}
+  3a_ky^2+2b_ky+f'(u)=0.
+\end{equation}
+Его корни:
+\begin{equation}
+  y=\frac{-b_k\pm\sqrt{b_k^2-3a_kf'(u)}}{3a_k}.
+\end{equation}
+Из двух корней выбирается тот, который попадает в текущий отрезок: $0\le y\le h$, после чего $x^*=u+y$. В программе использована эквивалентная компактная запись через величины $w$ и $z$:
 \begin{equation}
   w = f'(v)+f'(u)-3\frac{f(v)-f(u)}{v-u},
 \end{equation}
@@ -96,6 +136,82 @@
   x^* = v - (v-u)\frac{f'(v)+z-w}{f'(v)-f'(u)+2z}.
 \end{equation}
 
+Для первой итерации:
+\begin{equation}
+  x_1=1.5,\qquad x_2=2,\qquad h=x_2-x_1=0.5.
+\end{equation}
+Значения функции и производной на концах:
+\begin{equation}
+  f(1.5)=-5.766802,\qquad f(2)=-5.947039,
+\end{equation}
+\begin{equation}
+  f'(1.5)=-1.344535,\qquad f'(2)=0.693147.
+\end{equation}
+В обозначениях метода Дэвидона:
+\begin{equation}
+  z_1=\frac{3(f(x_1)-f(x_2))}{x_2-x_1}+f'(x_1)+f'(x_2)
+  =0.430032,
+\end{equation}
+\begin{equation}
+  w_1=\sqrt{z_1^2-f'(x_1)f'(x_2)}
+  =1.056829.
+\end{equation}
+Коэффициент шага:
+\begin{equation}
+  \mu_1=\frac{f'(x_2)+w_1-z_1}{f'(x_2)-f'(x_1)+2w_1}
+  =0.317956.
+\end{equation}
+Новая точка:
+\begin{equation}
+  \overline{x}_1=x_2-\mu_1(x_2-x_1)
+  =2-0.317956\cdot 0.5=1.841022.
+\end{equation}
+Так как $f'(1.841022)\approx -3.175\cdot 10^{-4}<0$, минимум расположен правее этой точки, поэтому новый отрезок:
+\begin{equation}
+  [1.841022,\;2].
+\end{equation}
+
+Для визуализации кубическую аппроксимацию можно также записывать в обычном виде
+\begin{equation}
+  P(x)=ax^3+bx^2+cx+d.
+\end{equation}
+Коэффициенты $a,b,c,d$ находятся из условий совпадения значений функции и производных на концах отрезка:
+\begin{equation}
+\begin{cases}
+  ax_1^3+bx_1^2+cx_1+d=f(x_1),\\
+  ax_2^3+bx_2^2+cx_2+d=f(x_2),\\
+  3ax_1^2+2bx_1+c=f'(x_1),\\
+  3ax_2^2+2bx_2+c=f'(x_2).
+\end{cases}
+\end{equation}
+Для первой итерации матричная система имеет вид:
+\begin{equation}
+\begin{pmatrix}
+1.5^3 & 1.5^2 & 1.5 & 1\\
+2^3 & 2^2 & 2 & 1\\
+3\cdot 1.5^2 & 2\cdot 1.5 & 1 & 0\\
+3\cdot 2^2 & 2\cdot 2 & 1 & 0
+\end{pmatrix}
+\begin{pmatrix}
+a\\b\\c\\d
+\end{pmatrix}
+=
+\begin{pmatrix}
+-5.766802\\
+-5.947039\\
+-1.344535\\
+0.693147
+\end{pmatrix}.
+\end{equation}
+Решение системы:
+\begin{equation}
+  a=0.278235,\qquad b=0.576947,\qquad c=-4.953463,\qquad d=-0.573782.
+\end{equation}
+Следовательно, кубическая аппроксимация первой итерации:
+\begin{equation}
+  P_1(x)=0.278235x^3+0.576947x^2-4.953463x-0.573782.
+\end{equation}
+
 Правило обновления отрезка:
 \begin{equation}
   \begin{cases}
@@ -104,6 +220,19 @@
   \end{cases}
 \end{equation}
 Критерий останова: $|f'(x^*)|<\varepsilon$, где $\varepsilon=10^{-4}$.
+
+\begin{table}[H]
+\centering
+\caption{Коэффициенты кубической модели на итерациях}
+\begin{tabular}{cccccc}
+\toprule
+$k$ & $u$ & $v$ & $h$ & $a_k$ & $b_k$ \\
+\midrule
+1 & 1.500000 & 2.000000 & 0.500000 & 0.278235 & 1.829006 \\
+2 & 1.841022 & 2.000000 & 0.158978 & 0.288100 & 2.112305 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Итерации}
 
@@ -296,22 +425,24 @@ $M_6$ & $(-0.000001,1.999998)$ & $2.38\cdot 10^{-11}$ \\
 
 Визуализация построена по схеме из файла \texttt{Contours and solutions.ipynb}: создается прямоугольная сетка \texttt{meshgrid}, на ней вычисляется целевая функция, затем через \texttt{contour} строятся линии уровня и поверх них рисуется ломаная последовательности приближений. В отличие от исходного notebook, уровни заданы не числом линий, а значениями функции в вершинах траектории. Поэтому линии уровня проходят через вершины ломаной, как требуется в ДЗ2.1.
 
+Для покоординатного спуска траектория должна иметь вид ``лесенки'', так как метод по очереди меняет только одну координату: сначала движение параллельно оси $x_1$, затем параллельно оси $x_2$. Для градиентного и наискорейшего спуска направление движения задается антиградиентом $-\nabla F$. Градиент перпендикулярен линии уровня, поэтому на графиках дополнительно отмечены синие направления $-\nabla F$.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.82\textwidth]{dz2_coordinate_descent.png}
-  \caption{Покоординатный спуск: ломаная идет параллельно координатным осям.}
+  \caption{Покоординатный спуск: лестничная траектория параллельно координатным осям.}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.82\textwidth]{dz2_gradient_descent.png}
-  \caption{Градиентный спуск с дроблением шага.}
+  \caption{Градиентный спуск: шаги идут по антиградиенту, перпендикулярно линиям уровня.}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.82\textwidth]{dz2_steepest_descent.png}
-  \caption{Наискорейший спуск с точным выбором шага вдоль антиградиента.}
+  \caption{Наискорейший спуск: направление антиградиента и точный выбор шага.}
 \end{figure}
 
 \section{ДЗ №2.2. Метод Ньютона}
@@ -373,6 +504,75 @@ $(3,13/3)$ & -5.185185 & $(6,4)$ & локальный минимум \\
 Формула метода Ньютона:
 \begin{equation}
   X_{k+1}=X_k-H(X_k)^{-1}\nabla z(X_k).
+\end{equation}
+В программе обратная матрица считается явно:
+\begin{equation}
+  H^{-1}(X_k)=\text{\texttt{np.linalg.inv(H)}}, \qquad
+  s_k=H^{-1}(X_k)\nabla z(X_k), \qquad
+  X_{k+1}=X_k-s_k.
+\end{equation}
+
+Рассмотрим первый шаг подробно, как в образце отчета. Начальная точка:
+\begin{equation}
+  X_0=\begin{pmatrix}2.5\\4.5\end{pmatrix}.
+\end{equation}
+Градиент в начальной точке:
+\begin{equation}
+  \nabla z(X_0)=
+  \begin{pmatrix}
+    3\cdot 2.5^2-12\cdot 2.5+9\\
+    3\cdot 4.5^2-22\cdot 4.5+39
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    -2.25\\
+    0.75
+  \end{pmatrix}.
+\end{equation}
+Матрица Гессе и обратная матрица:
+\begin{equation}
+  H(X_0)=
+  \begin{pmatrix}
+    6\cdot 2.5-12 & 0\\
+    0 & 6\cdot 4.5-22
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    3 & 0\\
+    0 & 5
+  \end{pmatrix},
+  \qquad
+  H(X_0)^{-1}=
+  \begin{pmatrix}
+    \frac{1}{3} & 0\\
+    0 & \frac{1}{5}
+  \end{pmatrix}.
+\end{equation}
+Шаг Ньютона:
+\begin{equation}
+  s_0=H(X_0)^{-1}\nabla z(X_0)=
+  \begin{pmatrix}
+    \frac{1}{3} & 0\\
+    0 & \frac{1}{5}
+  \end{pmatrix}
+  \begin{pmatrix}
+    -2.25\\
+    0.75
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    -0.75\\
+    0.15
+  \end{pmatrix}.
+\end{equation}
+Новое приближение:
+\begin{equation}
+  X_1=X_0-s_0=
+  \begin{pmatrix}2.5\\4.5\end{pmatrix}
+  -
+  \begin{pmatrix}-0.75\\0.15\end{pmatrix}
+  =
+  \begin{pmatrix}3.25\\4.35\end{pmatrix}.
 \end{equation}
 Критерий останова: $\|\nabla z(X_k)\|<10^{-4}$.
 

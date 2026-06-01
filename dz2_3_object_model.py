@@ -8,7 +8,7 @@ import numpy as np
 
 
 # Matplotlib при первом запуске создает кэш шрифтов.
-# Чтобы он не лез в домашнюю папку пользователя, кладем его в build/mplconfig.
+# кладем его в build/mplconfig.
 os.environ.setdefault("MPLCONFIGDIR", str(Path("build/mplconfig").resolve()))
 
 import matplotlib
@@ -20,7 +20,7 @@ from matplotlib.patches import FancyBboxPatch
 
 # ДЗ2.3.
 # Задание просит построить объектную модель трех методов оптимизации.
-# Поэтому здесь есть классы, но без лишнего усложнения:
+# Классы:
 #   1) абстрактная функция Objective2D;
 #   2) конкретная функция варианта 9;
 #   3) базовый оптимизатор Optimizer2D;

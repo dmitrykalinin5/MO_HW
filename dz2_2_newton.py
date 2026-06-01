@@ -92,6 +92,12 @@ def newton_method():
         # Сначала сохраняем текущее состояние, потом проверяем критерий остановки.
         g = grad_z(x)
         H = hessian_z(x)
+
+        # Здесь специально строим обратную матрицу H^{-1} явно.
+        # В более "промышленном" коде часто пишут np.linalg.solve(H, g),
+        # но для отчета по методу Ньютона нагляднее показать именно H^{-1} * grad.
+        H_inv = np.linalg.inv(H)
+        newton_step = H_inv @ g
         grad_norm = float(np.linalg.norm(g))
 
         rows.append(
@@ -102,15 +108,17 @@ def newton_method():
                 "gradient": g.tolist(),
                 "grad_norm": grad_norm,
                 "hessian": H.tolist(),
+                "hessian_inverse": H_inv.tolist(),
+                "newton_step": newton_step.tolist(),
             }
         )
 
         if grad_norm < EPS:
             break
 
-        # solve(H, g) вычисляет H^{-1}g без явного обращения матрицы.
-        # Так численно устойчивее, чем писать np.linalg.inv(H) @ g.
-        x = x - np.linalg.solve(H, g)
+        # Обновляем точку по формуле:
+        # x_{k+1} = x_k - H^{-1}(x_k) * grad z(x_k).
+        x = x - newton_step
 
     return rows
 
