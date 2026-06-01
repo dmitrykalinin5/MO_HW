@@ -93,9 +93,7 @@ def newton_method():
         g = grad_z(x)
         H = hessian_z(x)
 
-        # Здесь специально строим обратную матрицу H^{-1} явно.
-        # В более "промышленном" коде часто пишут np.linalg.solve(H, g),
-        # но для отчета по методу Ньютона нагляднее показать именно H^{-1} * grad.
+        # Строим обратную матрицу H^{-1} .
         H_inv = np.linalg.inv(H)
         newton_step = H_inv @ g
         grad_norm = float(np.linalg.norm(g))
